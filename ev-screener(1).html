@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>+EV Play Screener</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:#0a0c0f;--bg2:#111318;--bg3:#181c23;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+    --text:#f0f2f5;--muted:#6b7280;--muted2:#9ca3af;
+    --green:#22c55e;--gbg:rgba(34,197,94,0.1);--gborder:rgba(34,197,94,0.25);
+    --amber:#f59e0b;--abg:rgba(245,158,11,0.1);--aborder:rgba(245,158,11,0.25);
+    --red:#ef4444;--rbg:rgba(239,68,68,0.1);--rborder:rgba(239,68,68,0.25);
+    --blue:#3b82f6;--bbg:rgba(59,130,246,0.1);--bborder:rgba(59,130,246,0.2);
+    --r:10px;--rs:6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
+  .hdr{border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;background:rgba(10,12,15,.96);backdrop-filter:blur(12px);z-index:100}
+  .logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;letter-spacing:-.02em}
+  .dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+  .qpill{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);padding:4px 12px;border-radius:20px}
+  .qpill span{color:var(--muted2)}
+  .main{max-width:960px;margin:0 auto;padding:2rem}
+  .setup{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem}
+  .setup h2{font-size:15px;font-weight:700;margin-bottom:4px}
+  .setup p{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.6}
+  .krow{display:flex;gap:8px;align-items:center}
+  .krow input{flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:9px 12px;border-radius:var(--rs);outline:none;transition:border-color .2s}
+  .krow input:focus{border-color:var(--green)}
+  .btn{padding:9px 20px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .btn:hover{border-color:var(--green);color:var(--green)}
+  .btn.pri{background:var(--green);border-color:var(--green);color:#000}
+  .btn.pri:hover{background:#16a34a;border-color:#16a34a}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn:active:not(:disabled){transform:scale(.98)}
+  .tabs{display:flex;gap:4px;margin-bottom:1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;width:fit-content}
+  .tab{padding:8px 20px;border-radius:var(--rs);border:none;background:transparent;color:var(--muted2);font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+  .tab.active{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+  .tab:hover:not(.active){color:var(--text)}
+  .panel{display:none}.panel.active{display:block}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;padding:1rem 1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r)}
+  .filters select{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'Syne',sans-serif;font-size:13px;font-weight:600;padding:7px 10px;border-radius:var(--rs);outline:none;cursor:pointer}
+  .filters select:focus{border-color:var(--green)}
+  .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem}
+  .sc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+  .sc .lb{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.05em;margin-bottom:5px}
+  .sc .vl{font-size:24px;font-weight:800}.sc .vl.g{color:var(--green)}
+  .slbl{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:.07em;margin-bottom:10px}
+  .play{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:8px;transition:border-color .15s;animation:fu .2s ease both}
+  .play:hover{border-color:var(--border2)}
+  @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .ptop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+  .ptitle{font-size:16px;font-weight:700}
+  .psub{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:3px}
+  .badge{padding:4px 10px;border-radius:var(--rs);font-size:13px;font-weight:700;font-family:'DM Mono',monospace;white-space:nowrap}
+  .bh{background:var(--gbg);border:1px solid var(--gborder);color:var(--green)}
+  .bm{background:var(--abg);border:1px solid var(--aborder);color:var(--amber)}
+  .bl{background:var(--rbg);border:1px solid var(--rborder);color:var(--red)}
+  .pmeta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+  .pmeta span{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace}
+  .pmeta strong{color:var(--muted2)}
+  .pbooks{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--bg3)}
+  .pill.best{border-color:var(--gborder);color:var(--green);background:var(--gbg)}
+  .pill.sharp{border-color:var(--bborder);color:var(--blue);background:var(--bbg)}
+  .empty{text-align:center;padding:4rem 1rem;color:var(--muted);font-size:14px;line-height:1.8}
+  .empty .ic{font-size:36px;margin-bottom:12px}
+  .loading{text-align:center;padding:4rem 1rem}
+  .spin{width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 12px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .loading p{font-size:13px;color:var(--muted);font-family:'DM Mono',monospace}
+  .err{background:var(--rbg);border:1px solid var(--rborder);border-radius:var(--r);padding:12px 16px;color:#fca5a5;font-size:13px;line-height:1.6;font-family:'DM Mono',monospace;margin-bottom:1rem}
+  .err a{color:#93c5fd}
+  .warn{background:var(--abg);border:1px solid var(--aborder);border-radius:var(--r);padding:12px 16px;color:#fcd34d;font-size:13px;line-height:1.6;font-family:'DM Mono',monospace;margin-bottom:1rem}
+  .ok{background:var(--gbg);border:1px solid var(--gborder);border-radius:var(--r);padding:12px 16px;color:#86efac;font-size:13px;line-height:1.6;font-family:'DM Mono',monospace;margin-bottom:1rem}
+  .cf{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .fg{display:flex;flex-direction:column;gap:5px}
+  .fg label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.05em}
+  .fg input,.fg select{padding:9px 12px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border-color .2s}
+  .fg input:focus,.fg select:focus{border-color:var(--green)}
+  .rcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+  .rcard h3{font-size:17px;font-weight:700;margin-bottom:1rem}
+  .rgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:1.25rem}
+  .verdict{padding:12px;border-radius:var(--rs);text-align:center}
+  .vpos{background:var(--gbg);border:1px solid var(--gborder)}
+  .vneg{background:var(--rbg);border:1px solid var(--rborder)}
+  .vn{background:var(--bg3);border:1px solid var(--border)}
+  .vlbl{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.05em;margin-bottom:5px}
+  .vval{font-size:20px;font-weight:800}
+  .vpos .vval{color:var(--green)}.vneg .vval{color:var(--red)}.vn .vval{color:var(--muted2)}
+  .brow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;font-family:'DM Mono',monospace}
+  .brow:last-child{border-bottom:none}
+  .stag{font-size:10px;padding:2px 6px;background:var(--bbg);color:var(--blue);border:1px solid var(--bborder);border-radius:4px;margin-left:6px}
+  .help{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:10px;line-height:1.6}
+  .help a{color:var(--blue)}
+  @media(max-width:600px){
+    .main{padding:1rem}.stats{grid-template-columns:repeat(2,1fr)}
+    .fgrid{grid-template-columns:1fr}.rgrid{grid-template-columns:1fr}.hdr{padding:0 1rem}
+  }
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div class="logo"><div class="dot"></div>+EV Screener</div>
+  <div class="qpill">quota remaining: <span id="qv">—</span></div>
+</div>
+<div class="main">
+  <div class="setup">
+    <h2>API Key</h2>
+    <p>Your key is pre-filled. Click Connect to verify — this confirms the connection is working before you scan.</p>
+    <div class="krow">
+      <input type="password" id="apiKey" placeholder="Odds API key..." />
+      <button class="btn pri" onclick="testKey()">Connect</button>
+    </div>
+    <div id="keyMsg" style="margin-top:10px"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('scanner')">Auto Scanner</button>
+    <button class="tab" onclick="switchTab('checker')">PrizePicks / Underdog</button>
+  </div>
+
+  <div id="panel-scanner" class="panel active">
+    <div class="filters">
+      <select id="sportFilter">
+        <option value="">All in-season</option>
+        <option value="basketball_nba">NBA</option>
+        <option value="baseball_mlb">MLB</option>
+        <option value="icehockey_nhl">NHL</option>
+        <option value="americanfootball_nfl">NFL</option>
+        <option value="basketball_ncaab">NCAAB</option>
+        <option value="soccer_epl">EPL</option>
+        <option value="soccer_uefa_champs_league">Champions League</option>
+        <option value="soccer_usa_mls">MLS</option>
+      </select>
+      <select id="mktFilter">
+        <option value="h2h">Moneylines</option>
+        <option value="spreads">Spreads</option>
+        <option value="totals">Totals</option>
+      </select>
+      <select id="evFilter">
+        <option value="0">Any +EV</option>
+        <option value="2">2%+ EV</option>
+        <option value="3" selected>3%+ EV</option>
+        <option value="5">5%+ EV</option>
+        <option value="8">8%+ EV</option>
+      </select>
+      <button class="btn pri" id="scanBtn" onclick="runScanner()">▶ Scan Now</button>
+    </div>
+    <div id="scanOut"><div class="empty"><div class="ic">🎯</div>Click <strong>Connect</strong> to verify your key,<br/>then hit <strong>Scan Now</strong> to find live +EV plays.</div></div>
+  </div>
+
+  <div id="panel-checker" class="panel">
+    <div class="cf">
+      <div class="slbl" style="margin-bottom:12px">ENTER A PRIZEPICKS OR UNDERDOG PROP</div>
+      <div class="fgrid">
+        <div class="fg"><label>PLAYER NAME</label><input id="pName" placeholder="e.g. LeBron James" /></div>
+        <div class="fg"><label>STAT TYPE</label><input id="pStat" placeholder="e.g. Points, Pts+Reb+Ast" /></div>
+        <div class="fg"><label>LINE</label><input id="pLine" type="number" step="0.5" placeholder="e.g. 27.5" /></div>
+        <div class="fg"><label>DIRECTION</label><select id="pDir"><option value="over">Over</option><option value="under">Under</option></select></div>
+        <div class="fg"><label>SPORT</label>
+          <select id="pSport"><option value="basketball_nba">NBA</option><option value="americanfootball_nfl">NFL</option><option value="baseball_mlb">MLB</option><option value="icehockey_nhl">NHL</option></select>
+        </div>
+        <div class="fg"><label>PLATFORM PAYOUT</label>
+          <select id="pPayout"><option value="1.7">Pick 2 (~1.7x)</option><option value="2.5">Pick 3 (~2.5x)</option><option value="5.0">Pick 4 (~5x)</option><option value="10.0">Pick 5 (~10x)</option><option value="1.0">Single / Flex</option></select>
+        </div>
+      </div>
+      <button class="btn pri" onclick="checkProp()">▶ Check This Prop</button>
+      <p class="help">Compares the PrizePicks/Underdog line against sharp sportsbook consensus.<br/>
+      Player props require a <a href="https://the-odds-api.com" target="_blank">paid Odds API plan</a>. Free tier covers game lines only.</p>
+    </div>
+    <div id="checkOut"></div>
+  </div>
+</div>
+
+<script>
+// The Odds API supports CORS — this works when opened in Chrome directly.
+// If you still get a CORS error, change USE_PROXY to true:
+const USE_PROXY = false;
+const PROXY = 'https://corsproxy.io/?';
+const BASE = 'https://api.the-odds-api.com/v4';
+const SHARP = ['pinnacle','betfair','betonlineag','lowvig','circa'];
+const SOFT  = ['draftkings','fanduel','betmgm','caesars','pointsbetus','williamhill_us','bovada','mybookieag','unibet_us','betus','bet365','barstool'];
+
+function getKey(){ return document.getElementById('apiKey').value.trim(); }
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['scanner','checker'][i]===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+}
+function toImp(o){ o=+o; return o>0?100/(o+100):Math.abs(o)/(Math.abs(o)+100); }
+function toAm(p){ return p>=0.5?'-'+Math.round(p/(1-p)*100):'+'+Math.round((1-p)/p*100); }
+function ev(odds,prob){ const o=+odds; const pay=o>0?o/100:100/Math.abs(o); return prob*pay-(1-prob); }
+
+async function api(path){
+  const sep=path.includes('?')?'&':'?';
+  const target=BASE+path+sep+'apiKey='+getKey();
+  const url=USE_PROXY?PROXY+encodeURIComponent(target):target;
+  const r=await fetch(url);
+  const rem=r.headers.get('x-requests-remaining');
+  if(rem) document.getElementById('qv').textContent=Number(rem).toLocaleString();
+  if(!r.ok){ let m=await r.text(); try{m=JSON.parse(m).message||m}catch(e){} throw new Error('API '+r.status+': '+m); }
+  return r.json();
+}
+
+async function testKey(){
+  const el=document.getElementById('keyMsg');
+  if(!getKey()){el.innerHTML='<div class="err">Please enter your API key.</div>';return;}
+  el.innerHTML='<div class="warn">Connecting...</div>';
+  try{
+    const sports=await api('/sports?all=false');
+    const active=sports.filter(s=>!s.has_outrights);
+    el.innerHTML=`<div class="ok">✓ Connected — ${active.length} active sports available. Quota updated in top-right corner. You're ready to scan!</div>`;
+  }catch(e){
+    el.innerHTML=`<div class="err"><strong>Connection failed:</strong> ${e.message}<br/><br/>
+    <strong>Try these fixes:</strong><br/>
+    1. Make sure you're opening this file in <strong>Chrome</strong> (not Safari or Firefox)<br/>
+    2. Verify your key is correct at <a href="https://the-odds-api.com" target="_blank">the-odds-api.com</a><br/>
+    3. If still failing: open this .html file in a text editor, find <code>USE_PROXY = false</code> near the bottom, and change it to <code>USE_PROXY = true</code>, then save and re-open</div>`;
+  }
+}
+
+async function runScanner(){
+  const sport=document.getElementById('sportFilter').value;
+  const mkt=document.getElementById('mktFilter').value;
+  const minEV=parseFloat(document.getElementById('evFilter').value)/100;
+  const out=document.getElementById('scanOut');
+  const btn=document.getElementById('scanBtn');
+  if(!getKey()){out.innerHTML='<div class="err">Enter your API key and click Connect first.</div>';return;}
+  btn.disabled=true;btn.textContent='Scanning...';
+  out.innerHTML='<div class="loading"><div class="spin"></div><p>Fetching live odds across sharp & soft books...</p></div>';
+  try{
+    let sportsToScan;
+    if(sport){sportsToScan=[sport];}
+    else{
+      const all=await api('/sports?all=false');
+      sportsToScan=all.filter(s=>!s.has_outrights).map(s=>s.key).slice(0,5);
+    }
+    let allGames=[],booksFound=new Set();
+    for(const sk of sportsToScan){
+      try{
+        const games=await api(`/sports/${sk}/odds?regions=us,eu&markets=${mkt}&oddsFormat=american`);
+        games.forEach(g=>{g._sk=sk;allGames.push(g);});
+      }catch(e){}
+    }
+    if(!allGames.length){
+      out.innerHTML='<div class="warn">No games found right now. This can mean no games are currently scheduled, or your quota is used up. Try selecting a specific sport — NBA, MLB, and NHL are all in season.</div>';
+      btn.disabled=false;btn.textContent='▶ Scan Now';return;
+    }
+    const plays=[];
+    for(const g of allGames){
+      const bms=g.bookmakers||[];
+      bms.forEach(b=>booksFound.add(b.key));
+      const sharpBms=bms.filter(b=>SHARP.includes(b.key));
+      const softBms=bms.filter(b=>SOFT.includes(b.key));
+      if(!sharpBms.length||!softBms.length) continue;
+      const sampleMkt=bms[0]?.markets?.[0];
+      if(!sampleMkt) continue;
+      const teams=sampleMkt.outcomes.map(o=>o.name);
+      for(const team of teams){
+        const sp=sharpBms.map(bm=>{
+          const m=bm.markets?.find(x=>x.key===mkt);
+          const oc=m?.outcomes?.find(o=>o.name===team);
+          return oc?toImp(oc.price):null;
+        }).filter(Boolean);
+        if(!sp.length) continue;
+        const sharpProb=sp.reduce((a,b)=>a+b,0)/sp.length;
+        for(const bm of softBms){
+          const m=bm.markets?.find(x=>x.key===mkt);
+          const oc=m?.outcomes?.find(o=>o.name===team);
+          if(!oc) continue;
+          const e2=ev(oc.price,sharpProb);
+          if(e2>=minEV) plays.push({game:`${g.home_team} vs ${g.away_team}`,sport:g.sport_title||sk,team,book:bm.title,bookKey:bm.key,odds:oc.price,sharpProb,ev:e2,commence:g.commence_time,allBms:bms});
+        }
+      }
+    }
+    plays.sort((a,b)=>b.ev-a.ev);
+    btn.disabled=false;btn.textContent='▶ Scan Now';
+    const sh=`<div class="stats">
+      <div class="sc"><div class="lb">GAMES SCANNED</div><div class="vl">${allGames.length}</div></div>
+      <div class="sc"><div class="lb">+EV PLAYS FOUND</div><div class="vl g">${plays.length}</div></div>
+      <div class="sc"><div class="lb">BEST EV</div><div class="vl g">${plays.length?(plays[0].ev*100).toFixed(1)+'%':'—'}</div></div>
+      <div class="sc"><div class="lb">BOOKS COMPARED</div><div class="vl">${booksFound.size}</div></div>
+    </div>`;
+    if(!plays.length){out.innerHTML=sh+'<div class="empty">No +EV plays above threshold right now.<br/>Try lowering the min EV% filter or switching markets.</div>';return;}
+    let html=sh+`<div class="slbl">${plays.length} +EV PLAYS — SORTED BY EV%</div>`;
+    for(const [i,p] of plays.slice(0,50).entries()){
+      const ep=(p.ev*100).toFixed(1);
+      const bc=p.ev>0.07?'bh':p.ev>0.03?'bm':'bl';
+      const os=p.odds>0?'+'+p.odds:''+p.odds;
+      const ss=toAm(p.sharpProb);
+      const dt=new Date(p.commence).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      const pills=p.allBms.slice(0,8).map(bm=>{
+        const m=bm.markets?.find(x=>x.key===mkt);
+        const oc=m?.outcomes?.find(o=>o.name===p.team);
+        if(!oc) return '';
+        const o2=oc.price>0?'+'+oc.price:''+oc.price;
+        return `<span class="pill ${bm.key===p.bookKey?'best':SHARP.includes(bm.key)?'sharp':''}">${bm.title}: ${o2}</span>`;
+      }).join('');
+      html+=`<div class="play" style="animation-delay:${i*.025}s">
+        <div class="ptop"><div><div class="ptitle">${p.team}</div><div class="psub">${p.game} · ${p.sport} · ${dt}</div></div><span class="badge ${bc}">+${ep}% EV</span></div>
+        <div class="pmeta"><span>BEST BOOK: <strong>${p.book}</strong></span><span>ODDS: <strong>${os}</strong></span><span>SHARP LINE: <strong>${ss}</strong></span><span>TRUE PROB: <strong>${(p.sharpProb*100).toFixed(1)}%</strong></span></div>
+        <div class="pbooks">${pills}</div>
+      </div>`;
+    }
+    out.innerHTML=html;
+  }catch(e){
+    btn.disabled=false;btn.textContent='▶ Scan Now';
+    out.innerHTML=`<div class="err"><strong>Error:</strong> ${e.message}<br/><br/>If this is a CORS error: open this file in <strong>Chrome</strong>, or set <code>USE_PROXY = true</code> at the top of the script section and reload.</div>`;
+  }
+}
+
+async function checkProp(){
+  const player=document.getElementById('pName').value.trim();
+  const stat=document.getElementById('pStat').value.trim();
+  const line=parseFloat(document.getElementById('pLine').value);
+  const dir=document.getElementById('pDir').value;
+  const sport=document.getElementById('pSport').value;
+  const payout=parseFloat(document.getElementById('pPayout').value);
+  const out=document.getElementById('checkOut');
+  if(!player||!stat||isNaN(line)){out.innerHTML='<div class="err">Fill in player name, stat, and line.</div>';return;}
+  if(!getKey()){out.innerHTML='<div class="err">Enter your API key and click Connect first.</div>';return;}
+  out.innerHTML=`<div class="loading"><div class="spin"></div><p>Looking up ${player} on sharp markets...</p></div>`;
+  const pm='player_points,player_rebounds,player_assists,player_threes,player_blocks,player_steals,player_points_rebounds_assists,player_points_rebounds,player_points_assists';
+  let comps=[],sharpAvg=null;
+  try{
+    const data=await api(`/sports/${sport}/odds?regions=us&markets=${pm}&oddsFormat=american&bookmakers=draftkings,fanduel,pinnacle,betmgm,pointsbetus,caesars`);
+    const ln=player.toLowerCase().split(' ').slice(-1)[0];
+    for(const game of data){
+      for(const bm of(game.bookmakers||[])){
+        for(const mkt of(bm.markets||[])){
+          for(const oc of(mkt.outcomes||[])){
+            const desc=(oc.description||'').toLowerCase();
+            if(!desc.includes(ln)) continue;
+            const ocd=(oc.name||'').toLowerCase();
+            if(!ocd.includes(dir)) continue;
+            if(oc.point!==undefined&&Math.abs(oc.point-line)>0.6) continue;
+            comps.push({book:bm.title,key:bm.key,odds:oc.price,implied:toImp(oc.price),sharp:SHARP.includes(bm.key),point:oc.point});
+          }
+        }
+      }
+    }
+    const sh=comps.filter(c=>c.sharp);
+    if(sh.length) sharpAvg=sh.reduce((s,c)=>s+c.implied,0)/sh.length;
+  }catch(e){}
+  const bbe=1/(payout+1);
+  let html=`<div class="rcard"><h3>${player} — ${stat} ${dir} ${line}</h3>`;
+  if(!comps.length){
+    html+=`<div class="warn">No player prop data found. Player props require a paid Odds API plan. Free tier covers game lines only (moneylines, spreads, totals).</div>`;
+    html+=`<div class="rgrid">
+      <div class="verdict vn"><div class="vlbl">BREAK-EVEN PROB</div><div class="vval">${(bbe*100).toFixed(1)}%</div></div>
+      <div class="verdict vn"><div class="vlbl">PLATFORM PAYOUT</div><div class="vval">${payout}x</div></div>
+      <div class="verdict vn"><div class="vlbl">SHARP DATA</div><div class="vval">N/A</div></div>
+    </div>`;
+  }else{
+    const e2=sharpAvg?sharpAvg-bbe:null;
+    const vc=e2===null?'vn':e2>0.03?'vpos':e2<-0.03?'vneg':'vn';
+    html+=`<div class="rgrid">
+      <div class="verdict ${vc}"><div class="vlbl">EV VS PLATFORM</div><div class="vval">${e2!==null?(e2>0?'+':'')+(e2*100).toFixed(1)+'%':'—'}</div></div>
+      <div class="verdict vn"><div class="vlbl">SHARP TRUE PROB</div><div class="vval">${sharpAvg?(sharpAvg*100).toFixed(1)+'%':'—'}</div></div>
+      <div class="verdict vn"><div class="vlbl">BREAK-EVEN PROB</div><div class="vval">${(bbe*100).toFixed(1)}%</div></div>
+    </div>
+    <div class="slbl" style="margin-top:12px;margin-bottom:8px">BOOK COMPARISON</div>`;
+    for(const c of comps){
+      const os=c.odds>0?'+'+c.odds:''+c.odds;
+      html+=`<div class="brow"><span style="color:var(--muted2)">${c.book}${c.sharp?'<span class="stag">SHARP</span>':''}</span><span style="font-weight:500">${os}${c.point!==undefined?' ('+c.point+')':''}</span><span style="color:var(--muted)">${(c.implied*100).toFixed(1)}% implied</span></div>`;
+    }
+  }
+  html+='</div>';
+  out.innerHTML=html;
+}
+</script>
+</body>
+</html>
